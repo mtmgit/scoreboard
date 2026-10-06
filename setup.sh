@@ -1,9 +1,12 @@
-echo "🚀 Creating partsagain.com Scoreboard Project..."
+#!/usr/bin/env bash
 
-mkdir -p partsagain-scoreboard/public/.well-known
-mkdir -p partsagain-scoreboard/functions/api/webhooks
-cd partsagain-scoreboard
+echo "🚀 Building partsagain.com Scoreboard directly inside $(pwd)..."
 
+# Create required directories in current root
+mkdir -p public/.well-known
+mkdir -p functions/api/webhooks
+
+# 1. Configuration file
 cat << 'EOF' > wrangler.toml
 name = "partsagain-scoreboard"
 pages_build_output_dir = "public"
@@ -15,6 +18,7 @@ database_name = "partsagain_db"
 database_id = "YOUR_D1_DATABASE_ID_HERE"
 EOF
 
+# 2. Database Schema (SQLite + FTS5 Zero-FLOP Search)
 cat << 'EOF' > schema.sql
 CREATE TABLE IF NOT EXISTS assets (
   id TEXT PRIMARY KEY,
@@ -45,6 +49,7 @@ CREATE TABLE IF NOT EXISTS micro_telemetry (
 );
 EOF
 
+# 3. Native Web Push Service Worker
 cat << 'EOF' > public/sw.js
 self.addEventListener('push', (e) => {
   const data = e.data ? e.data.json() : { title: 'SMZ Vehicle Match', body: 'New vehicle match available at partsagain.com' };
@@ -63,6 +68,7 @@ self.addEventListener('notificationclick', (e) => {
 });
 EOF
 
+# 4. Clean White Frontend Interface
 cat << 'EOF' > public/index.html
 <!DOCTYPE html>
 <html lang="en">
@@ -288,6 +294,7 @@ cat << 'EOF' > public/index.html
 </html>
 EOF
 
+# 5. Search Endpoint
 cat << 'EOF' > functions/api/search.js
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
@@ -310,6 +317,7 @@ export async function onRequestGet(context) {
 }
 EOF
 
+# 6. Shopify Sync Endpoint
 cat << 'EOF' > functions/api/webhooks/shopify.js
 export async function onRequestPost(context) {
   try {
@@ -335,6 +343,7 @@ export async function onRequestPost(context) {
 }
 EOF
 
+# 7. Telemetry Endpoint
 cat << 'EOF' > functions/api/telemetry.js
 export async function onRequestPost(context) {
   try {
@@ -346,10 +355,12 @@ export async function onRequestPost(context) {
 
     return Response.json({ success: true });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: err.message }), { status: 500 });
   }
 }
 EOF
 
+# 8. Apple Merchant Verification File Placeholder
 touch public/.well-known/apple-developer-merchantid-domain-association
-echo "✅ Script setup.sh written successfully!"
+
+echo "✅ Setup script completed inside $(pwd)!"
